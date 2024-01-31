@@ -10,10 +10,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class WeatherFrame extends JFrame {
     private JLabel cityLabel;
-    private JTextField cityField;
+    private JTextField cityTextField;
     private JButton searchButton;
     private JLabel descriptionLabel;
     private JLabel temperatureLabel;
@@ -31,7 +33,7 @@ public class WeatherFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         cityLabel = new JLabel("Wpisz miasto:");
-        cityField = new JTextField(20);
+        cityTextField = new JTextField(20);
         searchButton = new JButton("Szukaj");
 
         descriptionLabel = new JLabel();
@@ -42,13 +44,13 @@ public class WeatherFrame extends JFrame {
         // tworzenie listy i jej wyświetlanie
         historyListModel = new DefaultListModel<>();
         historyList = new JList<>(historyListModel);
-        JScrollPane historyScrollPane = new JScrollPane(historyList);
+        historyScrollPane = new JScrollPane(historyList);
 
         setLayout(new BorderLayout());
 
         JPanel topPanel = new JPanel();
         topPanel.add(cityLabel);
-        topPanel.add(cityField);
+        topPanel.add(cityTextField);
         topPanel.add(searchButton);
         add(topPanel, BorderLayout.NORTH);
 
@@ -67,9 +69,7 @@ public class WeatherFrame extends JFrame {
 
         searchButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                // zamiana tekstu z cityField na zmienna String
-                String city = cityField.getText();
-
+                String city = cityTextField.getText();
                 if (!isValidCity(city)) {
                     JOptionPane.showMessageDialog(WeatherFrame.this,
                             "Wprowadź poprawną nazwę miasta.", "Błędna nazwa miasta",
@@ -87,26 +87,19 @@ public class WeatherFrame extends JFrame {
         });
 
         historyList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 1) {
-                    //  Pobiera źródło zdarzenia myszy (e.getSource()),
-                    //  które powinno być obiektem JList, a następnie rzutuje je na JList<String>
-                    JList<String> list = (JList<String>) e.getSource();
-                    int index = list.locationToIndex(e.getPoint());
-                    if (index >= 0) {
-                        // Pobiera wybrany element z modelu listy na podstawie indeksu
-                        String selectedCity = list.getModel().getElementAt(index);
-                        // Ustawia wybrane miasto w polu tekstowym
-                        cityField.setText(selectedCity);
-                    }
-                }
+            public void mouseClicked(MouseEvent evt) {
+                historyListMouseClicked(evt);
             }
         });
 
-        //można to dać wyżej bez większezgo znaczenia :)
         String defaultCity = getCityByIp();
-        cityField.setText(defaultCity);
+        cityTextField.setText(defaultCity);
+
+        // Dodanie ikon dla warunków pogodowych
+        addWeatherIcons();
+
+        // Skrócenie okienka z historią
+        shortenHistoryPanel();
     }
 
     private boolean isValidCity(String city) {
@@ -204,7 +197,45 @@ public class WeatherFrame extends JFrame {
         humidityLabel.setText("");
     }
 
-    // to w sumie bez sensu bo i tak odpalamy apke z WeatherApp.java a nie z tej klasy
+    private void addWeatherIcons() {
+        // Dodanie ikon dla warunków pogodowych
+        JLabel iconLabel = new JLabel();
+        iconLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JPanel iconPanel = new JPanel(new BorderLayout());
+        iconPanel.add(iconLabel, BorderLayout.CENTER);
+
+        add(iconPanel, BorderLayout.WEST);
+
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                iconLabel.setIcon(getWeatherIcon(cityTextField.getText()));
+            }
+        });
+    }
+
+    private void shortenHistoryPanel() {
+        // Skrócenie okienka z historią
+        historyScrollPane.setPreferredSize(new Dimension(150, 50));
+    }
+
+    private ImageIcon getWeatherIcon(String city) {
+        // Tutaj dodaj kod do określania ikony na podstawie warunków pogodowych w danym mieście
+        // Poniżej przykład - ikona słońca dla wszystkich miast
+        // Możesz rozbudować tę funkcję w zależności od warunków pogodowych
+        ImageIcon sunIcon = new ImageIcon("src/main/java/org/weatherapp/icons/sun.png");
+        return sunIcon;
+    }
+
+    private void historyListMouseClicked(java.awt.event.MouseEvent evt) {
+        if (evt.getClickCount() == 2) {
+            JList list = (JList) evt.getSource();
+            String selectedCity = (String) list.getSelectedValue();
+            cityTextField.setText(selectedCity);
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             WeatherFrame frame = new WeatherFrame();
